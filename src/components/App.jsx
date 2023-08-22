@@ -2,6 +2,8 @@
 
 import { Component } from 'react';
 import { nanoid } from 'nanoid';
+import * as yup from 'yup';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import './style.css';
 
 class App extends Component {
@@ -17,14 +19,15 @@ class App extends Component {
 		filter: '',
 	};
 
+	schema = yup.object({
+		name: yup.string().min(2).required('Name is required'),
+		number: yup.string().min(6).max(10).required('Number is required'),
+	});
+
 	handlerOnChange = ({ target }) => {
 		this.setState({
 			[target.name]: target.value,
 		});
-	};
-
-	handlerOnSumbit = e => {
-		this.handleClick(e);
 	};
 
 	handlerOnFitred = ({ target }) => {
@@ -35,18 +38,40 @@ class App extends Component {
 
 	handleAddContact = e => {
 		e.preventDefault();
-		this.setState(prevState => ({
-			contacts: [
-				...prevState.contacts,
-				{
-					id: nanoid(),
-					name: this.state.name,
-					number: this.state.number,
-				},
-			],
-			name: '',
-			number: '',
-		}));
+
+		const validateObj = { name: this.state.name, number: this.state.number };
+
+		this.schema
+			.validate(validateObj)
+			.then(() => {
+				const checkName = this.state.contacts.find(
+					contact => contact.name.toLowerCase() === this.state.name.toLowerCase()
+				);
+				if (checkName) {
+					alert(`${checkName.name} is already in contacts.`);
+					return;
+				}
+
+				this.setState(prevState => {
+					const newState = {
+						contacts: [
+							...prevState.contacts,
+							{
+								id: nanoid(),
+								name: this.state.name,
+								number: this.state.number,
+							},
+						],
+						name: '',
+						number: '',
+					};
+
+					return newState;
+				});
+			})
+			.catch(validationErrors => {
+				Notify.failure(`Error: ${validationErrors.errors}`);
+			});
 	};
 
 	handleDelClick = e => {
@@ -75,7 +100,7 @@ class App extends Component {
 							value={this.state.name}
 							type='text'
 							name='name'
-							pattern="^[a-zA-Zа-яА-Я]+([' -]?[a-zA-Zа-яА-Я ])*$"
+							pattern="^[a-zA-Zа-яА-Я]+([' \-]?[a-zA-Zа-яА-Я ])*$"
 							title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
 							required
 							autoComplete='off'
@@ -89,7 +114,7 @@ class App extends Component {
 							value={this.state.number}
 							type='tel'
 							name='number'
-							pattern='\+?\d{1,4}[-.\s]?\(?\d{1,3}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}'
+							pattern='\+?\d{1,4}[\-.\s]?\(?\d{1,3}\)?[\-.\s]?\d{1,4}[\-.\s]?\d{1,4}[\-.\s]?\d{1,9}'
 							title='Phone number must be digits and can contain spaces, dashes, parentheses and can start with +'
 							required
 							autoComplete='off'
