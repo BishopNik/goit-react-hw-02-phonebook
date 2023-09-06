@@ -36,7 +36,7 @@
 }
 
 .add-contact {
-	width: 200px;
+	min-width: 200px;
 	height: 48px;
 }
 
@@ -84,7 +84,7 @@
 }
 
 .del-button {
-	width: 80px;
+	min-width: 80px;
 	height: 40px;
 }
 
