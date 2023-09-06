@@ -62,11 +62,6 @@ class App extends Component {
 		});
 	};
 
-	handleClick = ({ target }) => {
-		target.style.scale = '0.9';
-		setTimeout(() => (target.style.scale = '1'), 80);
-	};
-
 	render() {
 		return (
 			<div className='container'>
