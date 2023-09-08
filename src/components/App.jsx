@@ -24,12 +24,6 @@ class App extends Component {
 		number: PropTypes.string,
 	};
 
-	handlerOnChange = ({ target }) => {
-		this.setState({
-			[target.name]: target.value,
-		});
-	};
-
 	handlerOnFitred = ({ target }) => {
 		this.setState({
 			[target.name]: target.value,
