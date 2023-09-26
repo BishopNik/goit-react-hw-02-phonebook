@@ -1,11 +1,12 @@
 /** @format */
 
 import { Component } from 'react';
-import PropTypes from 'prop-types';
 import { nanoid } from 'nanoid';
+import * as yup from 'yup';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import Filter from './filter';
-import ContactList from './contact';
-import ContactForm from './forms';
+import ContactList from './contactlist';
+import ContactForm from './contactform';
 import './style.css';
 
 class App extends Component {
@@ -19,40 +20,62 @@ class App extends Component {
 		filter: '',
 	};
 
-	static propTypes = {
-		name: PropTypes.string,
-		number: PropTypes.string,
-	};
+	schema = yup.object({
+		name: yup.string().min(2).required('Name is required'),
+		number: yup.string().min(6).max(10).required('Number is required'),
+	});
 
-	handlerOnFitred = ({ target }) => {
+	handlerOnFiltred = ({ target }) => {
 		this.setState({
 			[target.name]: target.value,
 		});
 	};
 
 	handleAddContact = ({ name, number }) => {
-		this.setState(prevState => {
-			const newState = {
-				contacts: [
-					...prevState.contacts,
-					{
-						id: nanoid(),
-						name,
-						number,
-					},
-				],
-			};
+		let validateObj = { name, number };
 
-			return newState;
+		return this.schema
+			.validate(validateObj)
+			.then(() => {
+				const checkName = this.state.contacts.find(
+					contact => contact.name.toLowerCase() === name.toLowerCase()
+				);
+				if (checkName) {
+					Notify.failure(`${checkName.name} is already in contacts.`);
+					// alert(`${checkName.name} is already in contacts.`);
+					return validateObj;
+				}
+				this.setState(prevState => {
+					return {
+						contacts: [
+							...prevState.contacts,
+							{
+								id: nanoid(),
+								name,
+								number,
+							},
+						],
+					};
+				});
+				return (validateObj = { name: '', number: '' });
+			})
+			.catch(validationErrors => {
+				Notify.failure(`Error: ${validationErrors.errors}`);
+				return validateObj;
+			});
+	};
+
+	handlerFilter = () => {
+		return this.state.contacts.filter(contact => {
+			const searchName = contact.name.toLowerCase();
+			const filterName = this.state.filter.toLowerCase();
+			return searchName.includes(filterName);
 		});
 	};
 
 	handleDelClick = e => {
 		this.setState(prevState => {
-			const updatedContacts = prevState.contacts.filter(
-				contact => contact.id !== e.target.id
-			);
-			return { contacts: updatedContacts };
+			return { contacts: prevState.contacts.filter(contact => contact.id !== e.target.id) };
 		});
 	};
 
@@ -61,15 +84,14 @@ class App extends Component {
 			<div className='container'>
 				<h1 className='title-name'>Phonebook</h1>
 
-				<ContactForm onSubmitForm={this.handleAddContact} contacts={this.state.contacts} />
+				<ContactForm onSubmitForm={this.handleAddContact} />
 
 				<h2 className='title-name'>Contacts</h2>
 
-				<Filter onFiltred={this.handlerOnFitred} value={this.state.filter} />
+				<Filter onFiltred={this.handlerOnFiltred} value={this.state.filter} />
 
 				<ContactList
-					contacts={this.state.contacts}
-					filter={this.state.filter}
+					contacts={this.handlerFilter()}
 					onDeleteContact={this.handleDelClick}
 				/>
 			</div>

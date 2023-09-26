@@ -2,8 +2,6 @@
 
 import { Component } from 'react';
 import PropTypes from 'prop-types';
-import * as yup from 'yup';
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import './style.css';
 
 class ContactForm extends Component {
@@ -13,20 +11,8 @@ class ContactForm extends Component {
 	};
 
 	static propTypes = {
-		contacts: PropTypes.arrayOf(
-			PropTypes.exact({
-				id: PropTypes.string.isRequired,
-				name: PropTypes.string.isRequired,
-				number: PropTypes.string.isRequired,
-			})
-		).isRequired,
 		onSubmitForm: PropTypes.func.isRequired,
 	};
-
-	schema = yup.object({
-		name: yup.string().min(2).required('Name is required'),
-		number: yup.string().min(6).max(10).required('Number is required'),
-	});
 
 	handlerOnChange = ({ target }) => {
 		this.setState({
@@ -41,25 +27,7 @@ class ContactForm extends Component {
 
 	handleSubmit = e => {
 		e.preventDefault();
-
-		const validateObj = { name: this.state.name, number: this.state.number };
-
-		this.schema
-			.validate(validateObj)
-			.then(() => {
-				const checkName = this.props.contacts.find(
-					contact => contact.name.toLowerCase() === this.state.name.toLowerCase()
-				);
-				if (checkName) {
-					alert(`${checkName.name} is already in contacts.`);
-					return;
-				}
-				this.props.onSubmitForm(this.state);
-				this.setState({ name: '', number: '' });
-			})
-			.catch(validationErrors => {
-				Notify.failure(`Error: ${validationErrors.errors}`);
-			});
+		this.props.onSubmitForm(this.state).then(res => this.setState(res));
 	};
 
 	render() {
